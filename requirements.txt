@@ -6,4 +6,5 @@ PyOpenGL==3.1.5
 PyOpenGL-accelerate==3.1.5
 pyparsing==2.4.7
 python-dateutil==2.8.1
+python-interface==1.5.5
 six==1.14.0
