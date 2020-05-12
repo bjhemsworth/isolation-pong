@@ -6,7 +6,9 @@
 ## This file tests the functions defined in the Transforms library against a range of imputs
 ## Function outputs are checked agaisnt result given by WOLFRAMALPHA and the results reports as pass if they are with 1% of expected value.
 
-import Transforms
+import sys
+sys.path.append('../source')
+from lib.polar_transforms import *
 
 # build list of cartesian coordinates [[x1,x2..],[y1,y2...]]
 cartList=[[-1,1,0.3,-0.2,-0.3,0.1,-0.6,0.9,-0.3,0.8],[0.7,0.2,-0.3,-0.6,-0.7,0.2,0.7,-0.4,0.4,-0.7]]
@@ -18,7 +20,7 @@ print("testing Transformations Libray")
 print("## NOTE Q 9 IS DESIGNED TO FAIL ##")
 print("Testing Polar to Cartesian Coordinates")
 for i in range (0, len(cartList[0])):
-    (x, y) = Transforms.polarToCart(polarList[0][i],polarList[1][i])
+    (x, y) = polarToCart(polarList[0][i],polarList[1][i])
     answerX = cartList[0][i]
     answerY = cartList[1][i]
     xCheck = 1- abs((answerX-x)/answerX)
@@ -30,7 +32,7 @@ for i in range (0, len(cartList[0])):
 ##something going on here needs fixing
 print("Testing Cartesian to Polar Coordinates")
 for i in range (0, len(polarList[0])):
-    (rad, ang) = Transforms.cartToPolar(cartList[0][i],cartList[1][i])
+    (rad, ang) = cartToPolar(cartList[0][i],cartList[1][i])
     answerRad = float(polarList[0][i])
     answerAng = float(polarList[1][i])
     radCheck = 1-float(abs((answerRad-rad)/answerRad))
