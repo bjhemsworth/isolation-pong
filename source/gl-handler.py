@@ -8,6 +8,18 @@ from OpenGL.GLU import *
 import glfw
 
 
+def load_shader(shader_file, GL_SHADER_TYPE):
+    shader_ID = glCreateShader(GL_SHADER_TYPE)
+
+    file = open(shader_file, 'r')
+    shader_source = file.read()
+
+    glShaderSource(shader_ID, shader_source)
+    glCompileShader(shader_ID)
+
+    return shader_ID
+
+
 def drawScreen():
     glClearColor(0.2,0.2,0.2, 1)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
