@@ -20,7 +20,7 @@ def load_shader(shader_file, GL_SHADER_TYPE):
     return shader_ID
 
 
-def drawScreen():
+def draw_screen():
     glClearColor(0.2,0.2,0.2, 1)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     ###rendering here
@@ -36,7 +36,7 @@ def setup():
     glfw.swap_interval(2)
 
     while not glfw.window_should_close(window):
-        drawScreen()
+        draw_screen()
 
         glfw.swap_buffers(window)
         glfw.poll_events()
