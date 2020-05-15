@@ -62,18 +62,31 @@ def draw_screen():
 def setup():
 
     glfw.init()
+    glfw.window_hint(glfw.CLIENT_API, glfw.OPENGL_API)
     glfw.window_hint(glfw.DOUBLEBUFFER, glfw.TRUE)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 6)
     window = glfw.create_window(800,600, "Isolation Pong", None, None)
     glfw.make_context_current(window)
     glfw.swap_interval(2)
 
 
     program_ID = glCreateProgram();
-    glAttachShader(program_ID, load_shader('./simple.frag', GL_FRAGMENT_SHADER))
-    glAttachShader(program_ID, load_shader('./simple.vert', GL_VERTEX_SHADER))
+    vert = load_shader('./simple.vert', GL_VERTEX_SHADER)
+    frag = load_shader('./simple.frag', GL_FRAGMENT_SHADER)
+    glAttachShader(program_ID, vert)
+    glAttachShader(program_ID, frag)
     glLinkProgram(program_ID)
 
-    
+
+    if glGetShaderiv(vert, GL_COMPILE_STATUS) == GL_FALSE:
+        print("Vertex shader not compiled")
+    if glGetShaderiv(frag, GL_COMPILE_STATUS) == GL_FALSE:
+        print("Fragment shader not compiled")
+    if glGetProgramiv(program_ID, GL_LINK_STATUS) == GL_FALSE:
+        print("Program not linked")
+
+    attrib = glGetAttribLocation(program_ID, 'a_test')
 
     v, n, i = load_obj('box.obj')
 
