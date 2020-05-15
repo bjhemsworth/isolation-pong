@@ -16,13 +16,41 @@ def load_shader(shader_file, GL_SHADER_TYPE):
     ## Load shaders in same folder as this file
     shader_file_location = pathlib.Path(__file__).parent.absolute() / shader_file
 
-    file = open(shader_file_location, 'r')
+    file = open(shader_file_location, 'rt')
     shader_source = file.read()
 
     glShaderSource(shader_ID, shader_source)
     glCompileShader(shader_ID)
 
     return shader_ID
+
+def load_obj(obj_file):
+    obj_file_location = pathlib.Path(__file__).parent.absolute() / "obj" / obj_file
+
+
+    ## Return all newlines as \n
+    file = open(obj_file_location, 'rt', newline = None)
+    vertex = []
+    normals = []
+    indices = []
+    while True:
+        raw = file.readline()
+        if raw == '':
+            break
+        data_list = raw.strip().split(' ')
+        data_type = data_list[0]
+        if data_type == 'v':
+            vertex.extend(data_list[1:])
+        elif data_type == 'vn':
+            normals.extend(data_list[1:])
+        elif data_type == 'f':
+            indices.extend(data_list[1:])
+        else:
+            pass
+    return vertex, normals, indices
+
+
+
 
 
 def draw_screen():
@@ -45,6 +73,10 @@ def setup():
     glAttachShader(program_ID, load_shader('./simple.vert', GL_VERTEX_SHADER))
     glLinkProgram(program_ID)
 
+    
+
+    v, n, i = load_obj('box.obj')
+
 
     while not glfw.window_should_close(window):
         draw_screen()
@@ -53,5 +85,6 @@ def setup():
         glfw.poll_events()
 
     glfw.terminate()
+
 
 setup()
