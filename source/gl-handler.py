@@ -8,6 +8,7 @@ import pathlib
 from OpenGL.GL import *
 ##from OpenGL.GLU import *
 import glfw
+import numpy as np
 
 
 def load_shader(shader_file, GL_SHADER_TYPE):
@@ -27,6 +28,8 @@ def load_shader(shader_file, GL_SHADER_TYPE):
 
     return shader_ID
 
+
+## PyOpenGL doesnt like python lists, return Numpy arrays where possible
 def load_obj(obj_file):
     obj_file_location = pathlib.Path(__file__).parent.absolute() / "obj" / obj_file
 
@@ -34,8 +37,9 @@ def load_obj(obj_file):
     ## Return all newlines as \n
     file = open(obj_file_location, 'rt', newline = None)
     vertex = []
-    normals = []
-    indices = []
+    normal = []
+    vertex_indices = []
+    normal_indices = []
     while True:
         raw = file.readline()
         if raw == '':
@@ -45,21 +49,20 @@ def load_obj(obj_file):
         if data_type == 'v':
             vertex.extend(data_list[1:])
         elif data_type == 'vn':
-            normals.extend(data_list[1:])
+            normal.extend(data_list[1:])
         elif data_type == 'f':
-            indices.extend(data_list[1:])
+            for item in data_list[1:]:
+                vert_i, _, norm_i = item.strip().split('/')
+                vertex_indices.extend(vert_i)
+                normal_indices.extend(norm_i)
         else:
             pass
-    return vertex, normals, indices
+    return (np.array(vertex, dtype=np.float32),
+           np.array(normal, dtype=np.float32),
+           np.array(vertex_indices, dtype=np.uint8),
+           np.array(normal_indices, dtype=np.uint8))
 
 
-
-
-
-def draw_screen():
-    glClearColor(0.2,0.2,0.2, 1)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    ###rendering here
 
 
 def glfw_setup():
@@ -77,7 +80,6 @@ def glfw_setup():
 
 def gl_program_setup():
 
-    global program_ID
     program_ID = glCreateProgram();
     vertex_s = load_shader('./simple.vert', GL_VERTEX_SHADER)
     fragment_s = load_shader('./simple.frag', GL_FRAGMENT_SHADER)
@@ -85,8 +87,13 @@ def gl_program_setup():
     glAttachShader(program_ID, fragment_s)
     glLinkProgram(program_ID)
 
-    if glGetProgramiv(program_ID, GL_LINK_STATUS) == GL_FALSE:
+    if glGetProgramiv(program_ID, GL_LINK_STATUS) != GL_TRUE:
         print("Program not linked")
+
+    glValidateProgram(program_ID)
+    if glGetProgramiv(program_ID, GL_VALIDATE_STATUS) != GL_TRUE:
+        print("Invalid program")
+
 
     ## Progam linking sends shaders to the GPU and local references can now be removed
     glDetachShader(program_ID, vertex_s)
@@ -95,21 +102,48 @@ def gl_program_setup():
     glDetachShader(program_ID, fragment_s)
     glDeleteShader(fragment_s)
 
-
+    return program_ID
 
 
 glfw_setup()
-gl_program_setup()
+
+program = gl_program_setup()
+
+glUseProgram(program)
+
+vertices= np.array((-1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0),dtype=np.float32);
+color = np.array((1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0),dtype=np.float32)
+
+VAO=glGenVertexArrays(1)
+glBindVertexArray(VAO)
+
+vert_b, col_b = glGenBuffers(2)
+glBindBuffer(GL_ARRAY_BUFFER, vert_b)
+glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
+glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
+glEnableVertexAttribArray(0)
+
+
+glBindBuffer(GL_ARRAY_BUFFER, col_b)
+glBufferData(GL_ARRAY_BUFFER, color.size*4 ,color, GL_STATIC_DRAW)
+glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, None)
+glEnableVertexAttribArray(1)
+
+glBindBuffer(GL_ARRAY_BUFFER,0)
+glBindVertexArray(0)
 
 
 
-attrib = glGetAttribLocation(program_ID, 'a_test')
-
-v, n, i = load_obj('box.obj')
-
+glClearColor(0.2,0.2,0.2, 1)
 
 while not glfw.window_should_close(window):
-    draw_screen()
+    glClear(GL_COLOR_BUFFER_BIT)
+    glUseProgram(program)
+
+    glBindVertexArray(VAO)
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0)
+
 
     glfw.swap_buffers(window)
     glfw.poll_events()
