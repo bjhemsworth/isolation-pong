@@ -2,14 +2,15 @@
 ##  Isolation Pong graphics handler
 ##  @version 0.01
 ##  @author Ben Hemsworth <ben_hemsworth@hotmail.co.uk>
-
+import numpy as np
 import pathlib
 
 from OpenGL.GL import *
-##from OpenGL.GLU import *
 import glfw
-import numpy as np
 
+
+def buffer_offset(index):
+    return ctypes.c_void_p(index)
 
 def load_shader(shader_file, GL_SHADER_TYPE):
     shader_ID = glCreateShader(GL_SHADER_TYPE)
@@ -28,11 +29,9 @@ def load_shader(shader_file, GL_SHADER_TYPE):
 
     return shader_ID
 
-
 ## PyOpenGL doesnt like python lists, return Numpy arrays where possible
 def load_obj(obj_file):
     obj_file_location = pathlib.Path(__file__).parent.absolute() / "obj" / obj_file
-
 
     ## Return all newlines as \n
     file = open(obj_file_location, 'rt', newline = None)
@@ -57,13 +56,11 @@ def load_obj(obj_file):
                 normal_indices.extend(norm_i)
         else:
             pass
+
     return (np.array(vertex, dtype=np.float32),
            np.array(normal, dtype=np.float32),
-           np.array(vertex_indices, dtype=np.uint8),
-           np.array(normal_indices, dtype=np.uint8))
-
-
-
+           np.array(vertex_indices, dtype=np.uint16),
+           np.array(normal_indices, dtype=np.uint16))
 
 def glfw_setup():
 
@@ -76,7 +73,6 @@ def glfw_setup():
     window = glfw.create_window(800,600, "Isolation Pong", None, None)
     glfw.make_context_current(window)
     glfw.swap_interval(2)
-
 
 def gl_program_setup():
 
@@ -94,7 +90,6 @@ def gl_program_setup():
     if glGetProgramiv(program_ID, GL_VALIDATE_STATUS) != GL_TRUE:
         print("Invalid program")
 
-
     ## Progam linking sends shaders to the GPU and local references can now be removed
     glDetachShader(program_ID, vertex_s)
     glDeleteShader(vertex_s)
@@ -106,42 +101,41 @@ def gl_program_setup():
 
 
 glfw_setup()
-
 program = gl_program_setup()
-
 glUseProgram(program)
 
+#vertices, _, vertex_indices, _  = load_obj('box.obj')
+
 vertices= np.array((-1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0),dtype=np.float32);
-color = np.array((1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0),dtype=np.float32)
+vertex_indices = np.array((0, 1, 2, 3, 4, 5, 6, 7, 8),dtype=np.uint16)
+
 
 VAO=glGenVertexArrays(1)
 glBindVertexArray(VAO)
 
-vert_b, col_b = glGenBuffers(2)
+vert_b, vert_i_b = glGenBuffers(2)
 glBindBuffer(GL_ARRAY_BUFFER, vert_b)
 glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW)
 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
 glEnableVertexAttribArray(0)
 
-
-glBindBuffer(GL_ARRAY_BUFFER, col_b)
-glBufferData(GL_ARRAY_BUFFER, color.size*4 ,color, GL_STATIC_DRAW)
-glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, None)
-glEnableVertexAttribArray(1)
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vert_i_b)
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertex_indices, GL_STATIC_DRAW)
 
 glBindBuffer(GL_ARRAY_BUFFER,0)
 glBindVertexArray(0)
 
 
-
 glClearColor(0.2,0.2,0.2, 1)
 
 while not glfw.window_should_close(window):
-    glClear(GL_COLOR_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     glUseProgram(program)
 
     glBindVertexArray(VAO)
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindBuffer(GL_ARRAY_BUFFER,vert_b)
+
+    glDrawElements(GL_TRIANGLES, vertex_indices.size, GL_UNSIGNED_SHORT, buffer_offset(0));
     glBindVertexArray(0)
 
 
